@@ -14,6 +14,9 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import AppAppBar from '../components/AppAppBar';
+import axios from '../../api/axios';
+import { redirect } from 'next/navigation';
+
 
 function Copyright(props) {
   return (
@@ -32,14 +35,50 @@ function Copyright(props) {
 
 const defaultTheme = createTheme();
 
+const REGISTER_URL = '/register';
+
 export default function SignUp() {
-  const handleSubmit = (event) => {
+  
+  const [firstName, setFirstName] = React.useState('');
+  const [lastName, setLastName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState(''); // can set this later
+  const [errMsg, setErrMsg] = React.useState('');
+  const [success, setSuccess] = React.useState(false);
+  
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    
+    try {
+      const response = await axios.post(REGISTER_URL,
+        JSON.stringify({ firstName, lastName, email, password }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true
+      }
+    );
+      console.log(response?.data);
+      console.log(response?.accessToken);
+      console.log(JSON.stringify(response));
+      setSuccess(true)
+      redirect('/login')
+    } catch (error) {
+      if (!error?.response) {
+        setErrMsg('No Server Response');
+      } else if (error.response?.status === 409) {
+          setErrMsg('Username Taken');
+      } else if (error.response?.status === 400) {
+        setErrMsg('Missing First Name, Last Name, Email, or Password');
+      } else if (error.response?.status === 401) {
+        setErrMsg('Unauthorized');
+      } else {
+        setErrMsg('Registration Failed');
+      }
+      console.error(error);
+    }
+    
   };
 
   const [mode, setMode] = React.useState('light');
@@ -50,6 +89,19 @@ export default function SignUp() {
   };
 
   return (
+    <>
+    {success ? (
+      <section>
+        <h1>Success!</h1>
+        <p>You have successfully registered please <a href="/login">login</a>.</p>
+      </section>
+      ) : (
+      <section>
+        <h1>Register</h1>
+        <p>Please fill out the <a href="/register">registration</a> form by following the link.</p>
+      </section>
+    )}
+
     <ThemeProvider theme={defaultTheme}>
       <Container component="main" maxWidth="xs">
         <CssBaseline />
@@ -72,6 +124,7 @@ export default function SignUp() {
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <TextField
+                  type='text'
                   autoComplete="given-name"
                   name="firstName"
                   required
@@ -79,6 +132,9 @@ export default function SignUp() {
                   id="firstName"
                   label="First Name"
                   autoFocus
+                  aria-invalid={firstName ? false : true}
+                  aria-describedby='uidnote'
+                  onChange={(e) => setFirstName(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -89,6 +145,7 @@ export default function SignUp() {
                   label="Last Name"
                   name="lastName"
                   autoComplete="family-name"
+                  onChange={(e) => setLastName(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -99,6 +156,7 @@ export default function SignUp() {
                   label="Email Address"
                   name="email"
                   autoComplete="email"
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -110,16 +168,12 @@ export default function SignUp() {
                   type="password"
                   id="password"
                   autoComplete="new-password"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={<Checkbox value="allowExtraEmails" color="primary" />}
-                  label="I want to receive inspiration, marketing promotions and updates via email."
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </Grid>
             </Grid>
             <Button
+              disabled={!firstName || !lastName || !email || !password ? true : false}
               type="submit"
               fullWidth
               variant="contained"
@@ -139,5 +193,6 @@ export default function SignUp() {
         <Copyright sx={{ mt: 5 }} />
       </Container>
     </ThemeProvider>
-  );
-}
+  
+  </>
+)}
