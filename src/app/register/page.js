@@ -15,7 +15,7 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import AppAppBar from '../components/AppAppBar';
 import axios from '../../api/axios';
-import { redirect } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 
 
 function Copyright(props) {
@@ -37,7 +37,10 @@ const defaultTheme = createTheme();
 
 const REGISTER_URL = '/register';
 
+
 export default function SignUp() {
+  
+  
   
   const [firstName, setFirstName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
@@ -47,23 +50,24 @@ export default function SignUp() {
   const [errMsg, setErrMsg] = React.useState('');
   const [success, setSuccess] = React.useState(false);
   
-
+  
   const handleSubmit = async (event) => {
+    const navigate = useNavigate();
     event.preventDefault();
     
     try {
       const response = await axios.post(REGISTER_URL,
-        JSON.stringify({ firstName, lastName, email, password }),
+        JSON.stringify({ firstname: firstName, lastname: lastName, email: email, password }),
       {
         headers: { 'Content-Type': 'application/json' },
         withCredentials: true
       }
     );
-      console.log(response?.data);
-      console.log(response?.accessToken);
+      console.log(response.data);
+      console.log(response.accessToken);
       console.log(JSON.stringify(response));
-      setSuccess(true)
-      redirect('/login')
+      // setSuccess(true)
+      navigate("/login");
     } catch (error) {
       if (!error?.response) {
         setErrMsg('No Server Response');
@@ -90,7 +94,7 @@ export default function SignUp() {
 
   return (
     <>
-    {success ? (
+    {/* {success ? (
       <section>
         <h1>Success!</h1>
         <p>You have successfully registered please <a href="/login">login</a>.</p>
@@ -100,7 +104,7 @@ export default function SignUp() {
         <h1>Register</h1>
         <p>Please fill out the <a href="/register">registration</a> form by following the link.</p>
       </section>
-    )}
+    )} */}
 
     <ThemeProvider theme={defaultTheme}>
       <Container component="main" maxWidth="xs">
@@ -120,6 +124,9 @@ export default function SignUp() {
           <Typography component="h1" variant="h5">
             Sign up
           </Typography>
+          {/* <Typography component="p" ref={errRef} className={errMsg ? "errmsg" : "offscreen"} aria-live="assertive">
+            {errMsg}
+          </Typography> */}
           <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
@@ -178,6 +185,7 @@ export default function SignUp() {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
+              
             >
               Sign Up
             </Button>
