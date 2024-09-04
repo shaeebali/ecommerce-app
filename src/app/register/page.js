@@ -15,7 +15,7 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import AppAppBar from '../components/AppAppBar';
 import axios from '../../api/axios';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 
 
 function Copyright(props) {
@@ -40,7 +40,7 @@ const REGISTER_URL = '/register';
 
 export default function SignUp() {
   
-  
+  const router = useRouter();
   
   const [firstName, setFirstName] = React.useState('');
   const [lastName, setLastName] = React.useState('');
@@ -52,7 +52,7 @@ export default function SignUp() {
   
   
   const handleSubmit = async (event) => {
-    const navigate = useNavigate();
+    
     event.preventDefault();
     
     try {
@@ -63,11 +63,11 @@ export default function SignUp() {
         withCredentials: true
       }
     );
-      console.log(response.data);
-      console.log(response.accessToken);
+      console.log(JSON.stringify(response.data));
+      console.log(JSON.stringify(response.accessToken));
       console.log(JSON.stringify(response));
       // setSuccess(true)
-      navigate("/login");
+      router.push('/login');
     } catch (error) {
       if (!error?.response) {
         setErrMsg('No Server Response');
@@ -185,7 +185,7 @@ export default function SignUp() {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              
+              // onClick={() => router.push("/login")}
             >
               Sign Up
             </Button>

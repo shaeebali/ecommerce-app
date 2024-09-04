@@ -14,6 +14,11 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import AppAppBar from '../components/AppAppBar';
+import AuthContext from '../context/AuthProvider';
+import axios from '../../api/axios';
+import { useRouter } from 'next/navigation';
+
+const LOGIN_URL = '/auth';
 
 function Copyright(props) {
   return (
@@ -33,13 +38,44 @@ function Copyright(props) {
 const defaultTheme = createTheme();
 
 export default function SignIn() {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+  
+  const router = useRouter();
+  
+  const { setAuth } = React.useContext(AuthContext);
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [errMsg, setErrMsg] = React.useState('');
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post(LOGIN_URL, 
+        JSON.stringify({email, password}),
+        {
+          headers: { 'Content-Type': 'application/json'},
+          withCredentials: true
+        }
+      )
+      console.log(JSON.stringify(response?.data))
+      console.log(JSON.stringify(response))
+      const accessToken = response?.data?.accessToken;
+      const roles = response?.data?.roles;
+      setAuth ({ email, password, roles, accessToken })
+      router.push('/');
+    } catch (error) {
+        if (!error?.response) {
+          setErrMsg('No Server Response')
+        } else if (error.response?.status === 400) {
+          setErrMsg('Missing email or password')
+        } else if (error.response?.status === 401) {
+          setErrMsg('Unauthorized')
+        } else {
+          setErrMsg('Login failed');
+        }
+        
+    }
+    
   };
 
   const [mode, setMode] = React.useState('light');
@@ -76,8 +112,10 @@ export default function SignIn() {
               id="email"
               label="Email Address"
               name="email"
-              autoComplete="email"
+              autoComplete="off"
               autoFocus
+              onChange={(e) => setEmail(e.target.value)}
+              value={email}
             />
             <TextField
               margin="normal"
@@ -87,12 +125,13 @@ export default function SignIn() {
               label="Password"
               type="password"
               id="password"
-              autoComplete="current-password"
+              onChange={(e) => setPassword(e.target.value)}
+              value={password}
             />
-            <FormControlLabel
+            {/* <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
-            />
+            /> */}
             <Button
               type="submit"
               fullWidth
